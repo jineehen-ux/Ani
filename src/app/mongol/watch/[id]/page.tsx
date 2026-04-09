@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import moviesData from '@/lib/mongol_movies.json';
 
 type Episode = { ep: number; title: string; iframe: string };
 type MongolMovie = {
@@ -17,14 +16,30 @@ type MongolMovie = {
   episodes?: Episode[];
 };
 
-const movies = moviesData as MongolMovie[];
-
 export default function MongolWatchPage() {
   const params = useParams();
   const router = useRouter();
-  const movie = movies.find(m => m.id === Number(params.id));
+  const [movie, setMovie] = useState<MongolMovie | null | undefined>(undefined);
   const [epIndex, setEpIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/mongol_movies.json')
+      .then(r => r.json())
+      .then((movies: MongolMovie[]) => {
+        const found = movies.find(m => m.id === Number(params.id));
+        setMovie(found ?? null);
+      });
+  }, [params.id]);
+
+  // Ачаалж байна
+  if (movie === undefined) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   if (!movie) {
     return (
@@ -44,7 +59,6 @@ export default function MongolWatchPage() {
 
   return (
     <div className="flex h-screen flex-col bg-black text-white">
-      {/* Header */}
       <header className="flex items-center gap-4 px-4 py-3 bg-background/90 backdrop-blur border-b border-border/40">
         <Button variant="outline" size="icon" onClick={() => router.push('/mongol')}>
           <ArrowLeft />
@@ -59,7 +73,6 @@ export default function MongolWatchPage() {
         </div>
       </header>
 
-      {/* Серилийн анги сонгогч */}
       {isSerial && (
         <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-background/80 border-b border-border/40">
           {episodes.map((ep, i) => (
@@ -78,7 +91,6 @@ export default function MongolWatchPage() {
         </div>
       )}
 
-      {/* Тоглуулагч */}
       <main className="flex flex-1 items-center justify-center overflow-hidden bg-black">
         {loading && (
           <div className="absolute flex items-center justify-center w-full h-full">
@@ -99,7 +111,6 @@ export default function MongolWatchPage() {
         )}
       </main>
 
-      {/* Серилийн хөтөч */}
       {isSerial && (
         <footer className="flex items-center justify-between p-4 bg-background/90 border-t border-border/40">
           <Button

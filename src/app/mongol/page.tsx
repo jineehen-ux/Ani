@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Header from '@/components/header';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PlayCircle } from 'lucide-react';
-import moviesData from '@/lib/mongol_movies.json';
 
 type MongolMovie = {
   id: number;
@@ -19,8 +18,6 @@ type MongolMovie = {
   preview?: string;
   episodes?: { ep: number; title: string; iframe: string }[];
 };
-
-const movies = moviesData as MongolMovie[];
 
 const TABS = [
   { key: 'all',     label: 'Бүгд' },
@@ -36,11 +33,12 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
   const [preview, setPreview] = useState(false);
   const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didPreview = useRef(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
   const href = `/mongol/watch/${movie.id}`;
 
-  // ── Гар утас: 300ms дарж байвал preview, тавихад кино руу орно ──
-  const handleTouchStart = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     didPreview.current = false;
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     touchTimer.current = setTimeout(() => {
       if (movie.preview) {
         setPreview(true);
@@ -49,22 +47,33 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
     }, 300);
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchTimer.current) clearTimeout(touchTimer.current);
+
+    // Хуруу хөдөлсөн бол (scroll) → юу ч хийхгүй
+    if (touchStart.current) {
+      const dx = Math.abs(e.changedTouches[0].clientX - touchStart.current.x);
+      const dy = Math.abs(e.changedTouches[0].clientY - touchStart.current.y);
+      if (dx > 8 || dy > 8) {
+        setPreview(false);
+        didPreview.current = false;
+        return;
+      }
+    }
+
     if (didPreview.current) {
-      // Preview харуулсан байвал → тавихад кино руу орно
       setTimeout(() => {
         setPreview(false);
         router.push(href);
       }, 600);
     }
-    // Preview гараагүй бол → энгийн tap → Link-ийн default ажиллана
   };
 
   const handleTouchCancel = () => {
     if (touchTimer.current) clearTimeout(touchTimer.current);
     setPreview(false);
     didPreview.current = false;
+    touchStart.current = null;
   };
 
   return (
@@ -79,7 +88,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
         onTouchCancel={handleTouchCancel}
         draggable={false}
       >
-        {/* Poster */}
         <Image
           src={movie.poster}
           alt={movie.name}
@@ -87,8 +95,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
           className="object-cover rounded-t-xl"
           unoptimized
         />
-
-        {/* Preview overlay */}
         {movie.preview && preview && (
           <img
             src={movie.preview}
@@ -96,7 +102,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
             className="absolute inset-0 w-full h-full object-cover rounded-t-xl animate-fade-in"
           />
         )}
-
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <Badge className="absolute top-2 right-2 capitalize">{movie.category}</Badge>
         {movie.episodes && (
@@ -105,7 +110,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
           </Badge>
         )}
       </Link>
-
       <div className="p-3 flex flex-col gap-2 flex-1">
         <Link href={href}>
           <h3 className="font-semibold text-sm truncate hover:text-primary transition-colors">{movie.name}</h3>
@@ -122,11 +126,18 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
 }
 
 export default function MongolPage() {
+  const [movies, setMovies] = useState<MongolMovie[]>([]);
   const [activeTab, setActiveTab] = useState('all');
+
+  useEffect(() => {
+    fetch('/mongol_movies.json')
+      .then(r => r.json())
+      .then(setMovies);
+  }, []);
 
   const filtered = useMemo(() =>
     activeTab === 'all' ? movies : movies.filter(m => m.category === activeTab),
-    [activeTab]
+    [activeTab, movies]
   );
 
   return (
