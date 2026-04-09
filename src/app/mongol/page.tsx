@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Header from '@/components/header';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,8 +19,7 @@ type MongolMovie = {
   episodes?: { ep: number; title: string; iframe: string }[];
 };
 
-const TABS = [
-  { key: 'all',     label: 'Бүгд' },
+const CATEGORIES = [
   { key: 'drama',   label: 'Драм' },
   { key: 'horror',  label: 'Хорор' },
   { key: 'trailer', label: 'Трейлер' },
@@ -50,7 +49,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchTimer.current) clearTimeout(touchTimer.current);
 
-    // Хуруу хөдөлсөн бол (scroll) → юу ч хийхгүй
     if (touchStart.current) {
       const dx = Math.abs(e.changedTouches[0].clientX - touchStart.current.x);
       const dy = Math.abs(e.changedTouches[0].clientY - touchStart.current.y);
@@ -127,7 +125,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
 
 export default function MongolPage() {
   const [movies, setMovies] = useState<MongolMovie[]>([]);
-  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     fetch('/mongol_movies.json')
@@ -135,44 +132,32 @@ export default function MongolPage() {
       .then(setMovies);
   }, []);
 
-  const filtered = useMemo(() =>
-    activeTab === 'all' ? movies : movies.filter(m => m.category === activeTab),
-    [activeTab, movies]
-  );
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
+        <div className="mb-10">
           <h1 className="text-3xl font-bold text-foreground">🇲🇳 Монгол Кино</h1>
           <p className="text-muted-foreground mt-1">{movies.length} кино нэмэгдсэн байна</p>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-5 py-2 rounded-full text-sm font-medium transition-all border ${
-                activeTab === tab.key
-                  ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/30'
-                  : 'bg-secondary/50 text-muted-foreground border-transparent hover:text-foreground hover:bg-secondary'
-              }`}
-            >
-              {tab.label}
-              <span className="ml-2 text-xs opacity-70">
-                {tab.key === 'all' ? movies.length : movies.filter(m => m.category === tab.key).length}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {filtered.map(movie => (
-            <MovieCard key={movie.id} movie={movie} />
-          ))}
-        </div>
+        {CATEGORIES.map(cat => {
+          const catMovies = movies.filter(m => m.category === cat.key);
+          if (catMovies.length === 0) return null;
+          return (
+            <section key={cat.key} className="mb-12">
+              <div className="flex items-baseline gap-3 mb-4">
+                <h2 className="text-xl font-bold text-foreground">{cat.label}</h2>
+                <span className="text-sm text-muted-foreground">{catMovies.length} кино</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {catMovies.map(movie => (
+                  <MovieCard key={movie.id} movie={movie} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </main>
     </div>
   );
