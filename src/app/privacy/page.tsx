@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Privacy Policy for AniMovie. We value your privacy.',
+  description: 'Privacy Policy for MZtv. We value your privacy.',
   robots: {
     index: false,
     follow: false,

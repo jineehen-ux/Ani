@@ -30,6 +30,9 @@ export default async function Home({
   let popularManga: Media[] = [];
   let trendingMovies: Movie[] = [];
   let popularMovies: Movie[] = [];
+  let topRatedMovies: Movie[] = [];
+  let nowPlayingMovies: Movie[] = [];
+  let upcomingMovies: Movie[] = [];
   let trendingTv: TVShow[] = [];
   let popularTv: TVShow[] = [];
   
@@ -50,7 +53,7 @@ export default async function Home({
         tvSearchResults = await fetchFromTMDB('/search/tv', { query });
       }
     } else {
-      [trendingAnime, popularAnime, trendingManga, popularManga, trendingMovies, popularMovies, trendingTv, popularTv] = await Promise.all([
+      [trendingAnime, popularAnime, trendingManga, popularManga, trendingMovies, popularMovies, topRatedMovies, nowPlayingMovies, upcomingMovies, trendingTv, popularTv] = await Promise.all([
         fetchFromAniList({
           type: 'ANIME',
           sort: ['TRENDING_DESC', 'POPULARITY_DESC'],
@@ -73,6 +76,9 @@ export default async function Home({
         }),
         fetchFromTMDB('/trending/movie/week'),
         fetchFromTMDB('/movie/popular'),
+        fetchFromTMDB('/movie/top_rated'),
+        fetchFromTMDB('/movie/now_playing'),
+        fetchFromTMDB('/movie/upcoming'),
         fetchFromTMDB('/trending/tv/week'),
         fetchFromTMDB('/tv/popular'),
       ]);
@@ -147,6 +153,15 @@ export default async function Home({
                   )}
                   {popularMovies.length > 0 && (
                     <MovieCarousel title="Popular Movies" items={popularMovies} />
+                  )}
+                  {nowPlayingMovies.length > 0 && (
+                    <MovieCarousel title="Now Playing" items={nowPlayingMovies} />
+                  )}
+                  {topRatedMovies.length > 0 && (
+                    <MovieCarousel title="Top Rated Movies" items={topRatedMovies} />
+                  )}
+                  {upcomingMovies.length > 0 && (
+                    <MovieCarousel title="Upcoming Movies" items={upcomingMovies} />
                   )}
                 </>
               )}

@@ -66,6 +66,9 @@ export type Movie = {
   genre_ids: number[];
   genres?: Genre[];
   imdb_id?: string;
+  bunny_thumbnail?: string | null;  // Bunny Stream custom poster (хэрэв байвал TMDB-с давна)
+  bunny_iframe_src?: string | null; // Bunny Stream iframe URL
+  preview_url?: string | null;      // Bunny Stream preview.webp (hover дээр тоглоно)
 };
 
 export type Season = {

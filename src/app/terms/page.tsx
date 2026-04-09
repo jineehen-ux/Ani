@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Terms of Use',
-  description: 'Terms of Use for AniMovie. By accessing this website, you agree to these terms.',
+  description: 'Terms of Use for MZtv. By accessing this website, you agree to these terms.',
   robots: {
     index: false,
     follow: false,
