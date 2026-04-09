@@ -17,6 +17,8 @@ const navItems = [
   { name: 'TV Shows', tab: 'tv' },
 ];
 
+const mongolItem = { name: 'Монгол', href: '/mongol' };
+
 function HeaderNavigation({ isMobile, onLinkClick }: { isMobile?: boolean; onLinkClick?: () => void }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -57,6 +59,14 @@ function HeaderNavigation({ isMobile, onLinkClick }: { isMobile?: boolean; onLin
             </Button>
           </Link>
         ))}
+        <Link href={mongolItem.href} passHref onClick={onLinkClick}>
+          <Button
+            variant={pathname.startsWith('/mongol') ? 'secondary' : 'ghost'}
+            className='w-full justify-start text-yellow-400'
+          >
+            {mongolItem.name}
+          </Button>
+        </Link>
       </nav>
     );
   }
@@ -79,6 +89,20 @@ function HeaderNavigation({ isMobile, onLinkClick }: { isMobile?: boolean; onLin
           </Button>
         </Link>
       ))}
+      <Link href={mongolItem.href} passHref>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            'transition-colors rounded-full font-bold',
+            pathname.startsWith('/mongol')
+              ? 'bg-background/70 text-yellow-400'
+              : 'text-yellow-400/70 hover:text-yellow-400'
+          )}
+        >
+          {mongolItem.name}
+        </Button>
+      </Link>
     </nav>
   );
 }
