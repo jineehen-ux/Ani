@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import Header from '@/components/header';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PlayCircle } from 'lucide-react';
@@ -31,17 +32,54 @@ const TABS = [
 ];
 
 function MovieCard({ movie }: { movie: MongolMovie }) {
-  const [hovered, setHovered] = useState(false);
+  const router = useRouter();
+  const [preview, setPreview] = useState(false);
+  const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didPreview = useRef(false);
   const href = `/mongol/watch/${movie.id}`;
+
+  // ── Гар утас: 300ms дарж байвал preview, тавихад кино руу орно ──
+  const handleTouchStart = () => {
+    didPreview.current = false;
+    touchTimer.current = setTimeout(() => {
+      if (movie.preview) {
+        setPreview(true);
+        didPreview.current = true;
+      }
+    }, 300);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimer.current) clearTimeout(touchTimer.current);
+    if (didPreview.current) {
+      // Preview харуулсан байвал → тавихад кино руу орно
+      setTimeout(() => {
+        setPreview(false);
+        router.push(href);
+      }, 600);
+    }
+    // Preview гараагүй бол → энгийн tap → Link-ийн default ажиллана
+  };
+
+  const handleTouchCancel = () => {
+    if (touchTimer.current) clearTimeout(touchTimer.current);
+    setPreview(false);
+    didPreview.current = false;
+  };
 
   return (
     <div className="group flex flex-col rounded-xl overflow-hidden border border-transparent hover:border-primary/40 hover:-translate-y-1 transition-all hover:shadow-xl hover:shadow-primary/10 bg-card">
       <Link
         href={href}
-        className="block aspect-[2/3] relative overflow-hidden"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        className="block aspect-[2/3] relative overflow-hidden select-none"
+        onMouseEnter={() => setPreview(true)}
+        onMouseLeave={() => setPreview(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+        draggable={false}
       >
+        {/* Poster */}
         <Image
           src={movie.poster}
           alt={movie.name}
@@ -49,13 +87,16 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
           className="object-cover rounded-t-xl"
           unoptimized
         />
-        {movie.preview && hovered && (
+
+        {/* Preview overlay */}
+        {movie.preview && preview && (
           <img
             src={movie.preview}
             alt="preview"
-            className="absolute inset-0 w-full h-full object-cover rounded-t-xl transition-opacity duration-300"
+            className="absolute inset-0 w-full h-full object-cover rounded-t-xl animate-fade-in"
           />
         )}
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <Badge className="absolute top-2 right-2 capitalize">{movie.category}</Badge>
         {movie.episodes && (
@@ -64,6 +105,7 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
           </Badge>
         )}
       </Link>
+
       <div className="p-3 flex flex-col gap-2 flex-1">
         <Link href={href}>
           <h3 className="font-semibold text-sm truncate hover:text-primary transition-colors">{movie.name}</h3>
@@ -91,15 +133,11 @@ export default function MongolPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Гарчиг */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            🇲🇳 Монгол Кино
-          </h1>
+          <h1 className="text-3xl font-bold text-foreground">🇲🇳 Монгол Кино</h1>
           <p className="text-muted-foreground mt-1">{movies.length} кино нэмэгдсэн байна</p>
         </div>
 
-        {/* Категори табууд */}
         <div className="flex flex-wrap gap-2 mb-8">
           {TABS.map(tab => (
             <button
@@ -119,7 +157,6 @@ export default function MongolPage() {
           ))}
         </div>
 
-        {/* Кино grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {filtered.map(movie => (
             <MovieCard key={movie.id} movie={movie} />
