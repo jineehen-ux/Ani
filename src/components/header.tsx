@@ -17,10 +17,7 @@ const navItems = [
   { name: 'TV Shows', tab: 'tv' },
 ];
 
-const specialItems = [
-  { name: 'Монгол', href: '/mongol', color: 'text-yellow-400' },
-  { name: 'Гадаад', href: '/foreign', color: 'text-primary' },
-];
+const mongolItem = { name: 'Монгол', href: '/mongol' };
 
 function HeaderNavigation({ isMobile, onLinkClick }: { isMobile?: boolean; onLinkClick?: () => void }) {
   const pathname = usePathname();
@@ -28,11 +25,21 @@ function HeaderNavigation({ isMobile, onLinkClick }: { isMobile?: boolean; onLin
   const currentQuery = searchParams.get('query');
 
   const getActiveTab = () => {
-    if (currentQuery) return searchParams.get('tab') || 'anime';
-    if (pathname.startsWith('/media/anime') || pathname.startsWith('/view/anime')) return 'anime';
-    if (pathname.startsWith('/media/manga') || pathname.startsWith('/view/manga')) return 'manga';
-    if (pathname.startsWith('/media/movie') || pathname.startsWith('/view/movie')) return 'movies';
-    if (pathname.startsWith('/media/tv') || pathname.startsWith('/view/tv')) return 'tv';
+    if (currentQuery) {
+      return searchParams.get('tab') || 'anime';
+    }
+    if (pathname.startsWith('/media/anime') || pathname.startsWith('/view/anime')) {
+      return 'anime';
+    }
+    if (pathname.startsWith('/media/manga') || pathname.startsWith('/view/manga')) {
+      return 'manga';
+    }
+    if (pathname.startsWith('/media/movie') || pathname.startsWith('/view/movie')) {
+      return 'movies';
+    }
+    if (pathname.startsWith('/media/tv') || pathname.startsWith('/view/tv')) {
+      return 'tv';
+    }
     return searchParams.get('tab') || 'anime';
   };
 
@@ -46,23 +53,20 @@ function HeaderNavigation({ isMobile, onLinkClick }: { isMobile?: boolean; onLin
           <Link href={`/?tab=${item.tab}`} passHref key={item.tab} onClick={onLinkClick}>
             <Button
               variant={isHomePage && currentTab === item.tab ? 'secondary' : 'ghost'}
-              className="w-full justify-start"
+              className='w-full justify-start'
             >
               {item.name}
             </Button>
           </Link>
         ))}
-        <div className="border-t border-border/40 my-2" />
-        {specialItems.map(item => (
-          <Link href={item.href} passHref key={item.href} onClick={onLinkClick}>
-            <Button
-              variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
-              className={cn('w-full justify-start font-bold', item.color)}
-            >
-              {item.name}
-            </Button>
-          </Link>
-        ))}
+        <Link href={mongolItem.href} passHref onClick={onLinkClick}>
+          <Button
+            variant={pathname.startsWith('/mongol') ? 'secondary' : 'ghost'}
+            className='w-full justify-start text-yellow-400'
+          >
+            {mongolItem.name}
+          </Button>
+        </Link>
       </nav>
     );
   }
@@ -85,23 +89,20 @@ function HeaderNavigation({ isMobile, onLinkClick }: { isMobile?: boolean; onLin
           </Button>
         </Link>
       ))}
-      <div className="w-px h-4 bg-border/60 mx-1" />
-      {specialItems.map(item => (
-        <Link href={item.href} passHref key={item.href}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'transition-colors rounded-full font-bold',
-              pathname.startsWith(item.href)
-                ? cn('bg-background/70', item.color)
-                : cn('opacity-70 hover:opacity-100', item.color)
-            )}
-          >
-            {item.name}
-          </Button>
-        </Link>
-      ))}
+      <Link href={mongolItem.href} passHref>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            'transition-colors rounded-full font-bold',
+            pathname.startsWith('/mongol')
+              ? 'bg-background/70 text-yellow-400'
+              : 'text-yellow-400/70 hover:text-yellow-400'
+          )}
+        >
+          {mongolItem.name}
+        </Button>
+      </Link>
     </nav>
   );
 }
@@ -118,13 +119,13 @@ function MobileNav() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 p-4">
-          <SheetHeader className="mb-4">
-            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-            <Link href="/" className="flex items-center space-x-2" onClick={() => setOpen(false)}>
-              <MZtvLogo className="h-6 w-6 text-primary" />
-              <span className="font-bold sm:inline-block">MZtv</span>
-            </Link>
-          </SheetHeader>
+           <SheetHeader className="mb-4">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+              <Link href="/" className="flex items-center space-x-2" onClick={() => setOpen(false)}>
+                <MZtvLogo className="h-6 w-6 text-primary" />
+                <span className="font-bold sm:inline-block">MZtv</span>
+              </Link>
+           </SheetHeader>
           <Suspense fallback={<div className="w-full h-10" />}>
             <HeaderNavigation isMobile onLinkClick={() => setOpen(false)} />
           </Suspense>

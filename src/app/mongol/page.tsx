@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PlayCircle } from 'lucide-react';
+import { PlayCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type MongolMovie = {
   id: number;
@@ -48,7 +48,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchTimer.current) clearTimeout(touchTimer.current);
-
     if (touchStart.current) {
       const dx = Math.abs(e.changedTouches[0].clientX - touchStart.current.x);
       const dy = Math.abs(e.changedTouches[0].clientY - touchStart.current.y);
@@ -58,7 +57,6 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
         return;
       }
     }
-
     if (didPreview.current) {
       setTimeout(() => {
         setPreview(false);
@@ -75,7 +73,7 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
   };
 
   return (
-    <div className="group flex flex-col rounded-xl overflow-hidden border border-transparent hover:border-primary/40 hover:-translate-y-1 transition-all hover:shadow-xl hover:shadow-primary/10 bg-card">
+    <div className="group flex-shrink-0 w-[140px] sm:w-[160px] flex flex-col rounded-xl overflow-hidden border border-transparent hover:border-primary/40 hover:-translate-y-1 transition-all hover:shadow-xl hover:shadow-primary/10 bg-card">
       <Link
         href={href}
         className="block aspect-[2/3] relative overflow-hidden select-none"
@@ -101,25 +99,70 @@ function MovieCard({ movie }: { movie: MongolMovie }) {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <Badge className="absolute top-2 right-2 capitalize">{movie.category}</Badge>
+        <Badge className="absolute top-2 right-2 capitalize text-xs">{movie.category}</Badge>
         {movie.episodes && (
-          <Badge variant="outline" className="absolute top-2 left-2 bg-black/60">
+          <Badge variant="outline" className="absolute top-2 left-2 bg-black/60 text-xs">
             {movie.episodes.length} анги
           </Badge>
         )}
       </Link>
-      <div className="p-3 flex flex-col gap-2 flex-1">
+      <div className="p-2 flex flex-col gap-2 flex-1">
         <Link href={href}>
-          <h3 className="font-semibold text-sm truncate hover:text-primary transition-colors">{movie.name}</h3>
+          <h3 className="font-semibold text-xs truncate hover:text-primary transition-colors">{movie.name}</h3>
         </Link>
-        <Button asChild size="sm" className="w-full mt-auto">
+        <Button asChild size="sm" className="w-full mt-auto text-xs h-8">
           <Link href={href}>
-            <PlayCircle className="mr-2 h-4 w-4" />
+            <PlayCircle className="mr-1 h-3 w-3" />
             {movie.episodes ? 'Үзэх' : 'Тоглуулах'}
           </Link>
         </Button>
       </div>
     </div>
+  );
+}
+
+function CategoryRow({ cat, movies }: { cat: { key: string; label: string }; movies: MongolMovie[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (dir: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir === 'left' ? -320 : 320, behavior: 'smooth' });
+  };
+
+  if (movies.length === 0) return null;
+
+  return (
+    <section className="mb-10">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-xl font-bold text-foreground">{cat.label}</h2>
+          <span className="text-sm text-muted-foreground">{movies.length} кино</span>
+        </div>
+        <div className="hidden sm:flex gap-1">
+          <button
+            onClick={() => scroll('left')}
+            className="p-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => scroll('right')}
+            className="p-1.5 rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <div
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {movies.map(movie => (
+          <MovieCard key={movie.id} movie={movie} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -141,23 +184,13 @@ export default function MongolPage() {
           <p className="text-muted-foreground mt-1">{movies.length} кино нэмэгдсэн байна</p>
         </div>
 
-        {CATEGORIES.map(cat => {
-          const catMovies = movies.filter(m => m.category === cat.key);
-          if (catMovies.length === 0) return null;
-          return (
-            <section key={cat.key} className="mb-12">
-              <div className="flex items-baseline gap-3 mb-4">
-                <h2 className="text-xl font-bold text-foreground">{cat.label}</h2>
-                <span className="text-sm text-muted-foreground">{catMovies.length} кино</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {catMovies.map(movie => (
-                  <MovieCard key={movie.id} movie={movie} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+        {CATEGORIES.map(cat => (
+          <CategoryRow
+            key={cat.key}
+            cat={cat}
+            movies={movies.filter(m => m.category === cat.key)}
+          />
+        ))}
       </main>
     </div>
   );
